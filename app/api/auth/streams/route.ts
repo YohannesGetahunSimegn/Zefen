@@ -52,6 +52,11 @@ export async function POST(req: NextRequest) {
         extractedId, // Store extracted video ID
         type: "Youtube",
         title: res.title,
+        smallImg:
+          thumbnails.length > 1
+            ? thumbnails[thumbnails - 2]
+            : thumbnails[thumbnails.length - 1],
+        bigImg: thumbnails[thumbnails.length - 1] ?? "",
       },
     });
 
