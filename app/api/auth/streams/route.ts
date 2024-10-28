@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prismaClient } from "../../../lib/db";
+import youtubesearchapi from "youtube-search-api";
 
 const YT_REGEX =
   /(?:youtube\.com\/\S*(?:(?:\/e(?:mbed))?\/|watch\/?\?(?:\S*?&?v\=))|youtu\.be\/)([a-zA-Z0-9_-]{6,11})/g;
@@ -30,6 +31,13 @@ export async function POST(req: NextRequest) {
       ? data.url.split("?v=")[1]
       : null;
 
+    const res = await youtubesearchapi.GetVideoDetails(extractedId);
+    console.log(res.title);
+    const thumbnails = res.thumbnail.thumbnails;
+    thumbnails.sort((a: { width: number }, b: { width: number }) =>
+      a.width < b.width ? -1 : 1
+    );
+
     if (!extractedId) {
       return NextResponse.json(
         { message: "Failed to extract video ID from the URL" },
@@ -43,6 +51,7 @@ export async function POST(req: NextRequest) {
         url: data.url,
         extractedId, // Store extracted video ID
         type: "Youtube",
+        title: res.title,
       },
     });
 
