@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       : null;
 
     const res = await youtubesearchapi.GetVideoDetails(extractedId);
-    console.log(res.title);
+
     const thumbnails = res.thumbnail.thumbnails;
     thumbnails.sort((a: { width: number }, b: { width: number }) =>
       a.width < b.width ? -1 : 1
@@ -51,12 +51,15 @@ export async function POST(req: NextRequest) {
         url: data.url,
         extractedId, // Store extracted video ID
         type: "Youtube",
-        title: res.title,
+        title: res.title ?? "Can't find video",
         smallImg:
           thumbnails.length > 1
-            ? thumbnails[thumbnails - 2]
-            : thumbnails[thumbnails.length - 1],
-        bigImg: thumbnails[thumbnails.length - 1] ?? "",
+            ? thumbnails[thumbnails.length - 2].url
+            : thumbnails[thumbnails.length - 1].url ??
+              "https://cdn.pixabay.com/photo/2019/07/23/13/51/shepherd-dog-4357790_960_720.jpg",
+        bigImg:
+          thumbnails[thumbnails.length - 1].url ??
+          "https://cdn.pixabay.com/photo/2016/07/15/15/55/dachshund-1519374_1280.jpg",
       },
     });
 
