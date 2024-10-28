@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prismaClient } from "../../../lib/db";
 
-const YT_REGEX = new RegExp(
-  "https://www\\.youtube\\.com/watch\\?v=[a-zA-Z0-9_-]{11}"
-);
+const YT_REGEX =
+  /(?:youtube\.com\/\S*(?:(?:\/e(?:mbed))?\/|watch\/?\?(?:\S*?&?v\=))|youtu\.be\/)([a-zA-Z0-9_-]{6,11})/g;
 
 const CreateStramSchema = z.object({
   creatorId: z.string(),
@@ -14,7 +13,7 @@ const CreateStramSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const data = CreateStramSchema.parse(await req.json());
-    const isYt = YT_REGEX.test(data.url);
+    const isYt = data.url.match(YT_REGEX);
 
     if (!isYt) {
       return NextResponse.json(
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await prismaClient.stream.create({
+    const stream = await prismaClient.stream.create({
       data: {
         userId: data.creatorId,
         url: data.url,
@@ -48,7 +47,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: "Stream created successfully" },
+      { message: "Stream created successfully", id: stream.id },
       { status: 201 } // Use 201 for successful creation
     );
   } catch (err) {
@@ -61,4 +60,17 @@ export async function POST(req: NextRequest) {
       }
     );
   }
+}
+
+export async function GET(req: NextRequest) {
+  const createrId = req.nextUrl.searchParams.get("createrId");
+  const streams = await prismaClient.stream.findMany({
+    where: {
+      userId: createrId ?? "",
+    },
+  });
+
+  return NextResponse.json({
+    streams,
+  });
 }
